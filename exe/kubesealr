@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+require 'kubeseal/cli'
+Kubeseal::CLI.start(ARGV)

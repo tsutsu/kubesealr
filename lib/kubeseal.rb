@@ -94,7 +94,6 @@ class Kubeseal
     )
   end
 
-  private
   def seal(plaintext, scope_label)
     cs_pubkey = self.cluster_sealer_public_key
 
@@ -126,7 +125,6 @@ class Kubeseal
     ciphertext_parts.pack('S>A*A*')
   end
 
-  private
   def unseal(ciphertext, scope_label)
     cs_privkeys_to_try = self.cluster_sealer_private_keys.dup
 

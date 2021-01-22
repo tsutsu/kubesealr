@@ -10,11 +10,12 @@ require 'kubeseal/version'
 
 class Kubeseal
   DEFAULT_KEY_FETCHER = lambda do |_|
-    raise NotImplementedError, "no cert getter passed"
+    raise NotImplementedError, "no cluster key-fetcher passed"
   end
 
-  def initialize(&cluster_sealer_key_fetcher)
-    @cluster_sealer_key_fetcher = cluster_sealer_key_fetcher || DEFAULT_KEY_FETCHER
+  def initialize(key_fetcher: nil, resealer: nil)
+    @cluster_sealer_key_fetcher = key_fetcher || DEFAULT_KEY_FETCHER
+    @cluster_sealer_resealer = resealer
   end
 
   def cluster_sealer_public_key
@@ -166,6 +167,47 @@ class Kubeseal
     plaintext
   end
 
+  def reseal(...)
+    if @cluster_sealer_resealer
+      reseal_serverside(...)
+    else
+      reseal_clientside(...)
+    end
+  end
+
+  def reseal_clientside(ciphertext, scope_label)
+    plaintext = unseal(ciphertext, scope_label)
+    seal(plaintext, scope_label)
+  end
+
+  def reseal_serverside(ciphertext, scope_label)
+    rc_namespace, rc_name, scope =
+      case scope_label.split('/', 2)
+      in []
+        ["dummy", "dummy", :"cluster-wide"]
+      in [ns]
+        [ns, "dummy", :"namespace-wide"]
+      in [ns, name]
+        [ns, name, :strict]
+      end
+
+    rc = build_sealed_secret_rc(
+      rc_namespace,
+      rc_name,
+      'Opaque',
+      armor({'dummy' => ciphertext}, strict: true)
+    )
+    rc = patch_with_scope(rc, scope)
+
+    resealed_rc = reseal_wrapped_serverside(rc)
+
+    Base64.decode64(resealed_rc.dig('spec', 'encryptedData', 'dummy'))
+  end
+
+  def reseal_wrapped_serverside(sealed_secret_rc)
+    YAML.load(@cluster_sealer_resealer.call(sealed_secret_rc.to_yaml))
+  end
+
   private
   def label_for(scope, rc_namespace, rc_name)
     case scope
@@ -246,8 +288,12 @@ class Kubeseal
     end
   end
 
-  def armor(h)
-    (h || {}).map{ |k, v| [k, Base64.encode64(v)] }.to_h
+  def armor(h, strict: false)
+    if strict
+      (h || {}).map{ |k, v| [k, Base64.strict_encode64(v)] }.to_h
+    else
+      (h || {}).map{ |k, v| [k, Base64.encode64(v)] }.to_h
+    end
   end
 
   def unarmor(h)

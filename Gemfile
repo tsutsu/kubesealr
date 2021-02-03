@@ -8,7 +8,6 @@ gemspec
 # override dep resolution to fix Ruby 3.0 support
 # (libs dependent on this lib must do this on their own)
 gem 'k8s-ruby', github: 'tsutsu/k8s-ruby', branch: 'fork-master'
-gem 'recursive-open-struct', github: 'tsutsu/recursive-open-struct', branch: 'fix-ruby3-support'
 
 # development dependencies
 gem 'rake', '~> 13.0'

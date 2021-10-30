@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     kubesealr (0.1.3)
-      k8s-ruby2 (~> 0.10.6)
+      k8s-ruby2 (~> 0.10.7)
       openssl-oaep
 
 GEM
@@ -37,7 +37,7 @@ GEM
     ice_nine (0.11.2)
     jsonpath (1.1.0)
       multi_json
-    k8s-ruby2 (0.10.6)
+    k8s-ruby2 (0.10.7)
       dry-struct (~> 1.4.0)
       dry-types (~> 1.5.0)
       excon (~> 0.78)

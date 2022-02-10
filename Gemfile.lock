@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    kubesealr (0.1.5)
+    kubesealr (0.1.6)
       k8s-ruby2 (~> 2.0.13)
       openssl-oaep
 
